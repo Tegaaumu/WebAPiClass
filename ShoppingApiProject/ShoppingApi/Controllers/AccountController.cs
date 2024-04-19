@@ -122,7 +122,8 @@ namespace ShoppingApi.Controllers
                 var UserDetails2 = _userManager.Users.FirstOrDefault(v => v.Id == validaionTokenMesage.UserID);
                 if (UserDetails2!.UniqueCode == validaionTokenMesage.UniqueCode)
                 {
-                    var result = await _userManager.ConfirmEmailAsync(UserDetails, Convert.ToString(validaionTokenMesage.Token)!);
+                    var text = Convert.ToString(validaionTokenMesage.Token)!;
+                    var result = await _userManager.ConfirmEmailAsync(UserDetails, text);
                     if (result.Succeeded)
                     {
                         return Ok("Confirmation was successfully");
@@ -132,5 +133,76 @@ namespace ShoppingApi.Controllers
             }
             return BadRequest("User is not valid");
         }
+
+        [HttpPost("LogIn")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Login(LoginViewModel signIn)
+        {
+            if (ModelState.IsValid)
+            {
+
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Email == signIn.UserName || u.UserName == signIn.UserName);
+            if (user == null)
+            {
+                return BadRequest("You entered a wrong username or email");
+            }
+
+
+                if (user != null && !user.EmailConfirmed && (await _userManager.CheckPasswordAsync(user, signIn.Password)))
+                {
+                    ModelState.AddModelError(string.Empty, "Email not confiremed yet");
+
+                    return Ok(signIn);
+                }
+
+                var User = new ApplicationUser
+                {
+                    UserName = user.UserName,
+                    Email = user.Email
+                };
+                var test = await _userManager.CheckPasswordAsync(user, signIn.Password);
+
+                var result = await _signInManager.PasswordSignInAsync(signIn.UserName, signIn.Password, signIn.RememberMe, lockoutOnFailure: true);
+                if (result.Succeeded)
+                {
+                    return Ok("You have signed in successfully");
+                }
+                else
+                {
+                    return BadRequest("Password is not correct");
+                }
+
+                //if (result.IsLockedOut)
+                //{
+                //    return Ok("Account Locked");
+                //}
+            }
+            return Ok();
+        }
+
+        [HttpGet("IFUserISSignedIn")]
+        public async Task<IActionResult> GetSignIn()
+        {
+            var user = _signInManager.IsSignedIn(User);
+            if(user == true)
+            {
+                var userDetails = User.Identity.Name;
+                //var userDetail = User.Identity.AuthenticationType; 
+                return Ok($"{userDetails} is currently signed in");
+            }
+
+            return BadRequest("You are not signed in yet");
+        }
+
+        [HttpPost("LogOut")]
+        public async Task<IActionResult> LogOut()
+        {
+            await _signInManager.SignOutAsync();
+            return Ok("Users has been logged out sucessfully");
+        }
     }
+
 }
