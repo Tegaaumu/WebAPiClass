@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ShoppingApi.SMTP;
+using Microsoft.Extensions.Logging;
 //using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 
@@ -153,7 +154,7 @@ namespace ShoppingApi.Controllers
 
                 if (user != null && !user.EmailConfirmed && (await _userManager.CheckPasswordAsync(user, signIn.Password)))
                 {
-                    ModelState.AddModelError(string.Empty, "Email not confiremed yet");
+                    ModelState.AddModelError(string.Empty, "Email not confirmed yet");
 
                     return Ok(signIn);
                 }
@@ -183,7 +184,8 @@ namespace ShoppingApi.Controllers
             return Ok();
         }
 
-        [HttpGet("IFUserISSignedIn")]
+        [HttpGet("IfUserIsSignedIn")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetSignIn()
         {
             var user = _signInManager.IsSignedIn(User);
@@ -198,11 +200,104 @@ namespace ShoppingApi.Controllers
         }
 
         [HttpPost("LogOut")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> LogOut()
         {
             await _signInManager.SignOutAsync();
             return Ok("Users has been logged out sucessfully");
         }
+
+        [HttpPost("ForgetPassword")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                //var user = await _userManager.FindByEmailAsync(model.Email);
+
+                var user = _userManager.Users.FirstOrDefault(u => u.UserName == model.Email || u.Email == model.Email);
+                var te = await _userManager.IsEmailConfirmedAsync(user);
+                if (user != null && await _userManager.IsEmailConfirmedAsync(user))
+                {
+
+                    //var valueOfRandomValue = GenerateRandmVAlues.RAndomNumber();
+
+                    Task<string> token = _userManager.GeneratePasswordResetTokenAsync(user);
+
+                    var passwordResetLink = Url.Action("ResetPassword", "Account", new { email = user.Email, token = token }, Request.Scheme);
+                    var passwordResetLink1 = Url.Action("ResetPassword", "Account");
+
+
+                    ValidaionTokenMesage validaionTokenMesage = new ValidaionTokenMesage()
+                    {
+                        Message = $"Go to {passwordResetLink1} and paste your information to reset your token",
+                        UserID = user.UserName,
+                        Token = token,
+                        UniqueCode = user.UniqueCode
+                    };
+
+                    return Ok(validaionTokenMesage);
+                }
+                
+                return Ok("Invalid parameters");
+            }
+            return Ok(model);
+
+        }
+
+        [HttpPost("ResetPassword")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ResetPassword(ResetPassword resetPassword)
+        {
+            var users = _userManager.Users.FirstOrDefault(u=> u.UserName == resetPassword.Email || u.Email == resetPassword.Email);
+            if (users == null) return BadRequest("This user is not in our database");
+
+            var result = await _userManager.ResetPasswordAsync(users, resetPassword.Token, resetPassword.Password);
+            if (result.Succeeded)
+            {
+                if (await _userManager.IsLockedOutAsync(users))
+                {
+                    await _userManager.SetLockoutEndDateAsync(users, DateTimeOffset.UtcNow);
+                }
+                return Ok("Your password has been reset");
+            }
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError("", error.Description);
+            }
+            return Ok(resetPassword);
+        }
+
+        [HttpPost("ChangePassword")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ChangePassword(ChangePassword changePassword)
+        {
+            var user = _signInManager.IsSignedIn(User);
+            var Username = User.Identity.Name;
+            //var userDetails = await _userManager.Users.FirstOrDefaultAsync(u => u.UserName == Username);
+            var userDetails = await _userManager.GetUserAsync(User);
+            if (user == false)
+            {
+                return BadRequest("This user must be signed in before he can change his password");
+            }
+            var result = await _userManager.ChangePasswordAsync(userDetails, changePassword.OldPassword, changePassword.NewPassword);
+            if (result.Succeeded)
+            {
+
+                await _signInManager.RefreshSignInAsync(userDetails);
+                return Ok("You have changed your password");
+            }
+            foreach (var item in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, item.Description);
+            }
+
+            var modelStateErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage).ToList();
+            return BadRequest($"PLease place in the proper value at {string.Join(", ", modelStateErrors)}");
+        }
+
     }
 
 }

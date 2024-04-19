@@ -6,6 +6,7 @@ namespace ShoppingApi.InputData
     {
         [Required]
         public string UserName { get; set; }
+
         //[Required]
         ////[Remote(action: "IsEmailInUse", controller: "Account")]
         //[DataType(DataType.EmailAddress)]
