@@ -9,6 +9,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ShoppingApi.SMTP;
 using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Client;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
+using Microsoft.AspNetCore.Hosting.Server;
+using System.Net.Mail;
+using System.Net;
 //using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 
@@ -36,6 +41,7 @@ namespace ShoppingApi.Controllers
 
         [HttpGet("GetRegisterDetails")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult GetLogInDetails()
         {
             var RegisteredUsers = _applicationDBContext!.Users;
@@ -84,13 +90,14 @@ namespace ShoppingApi.Controllers
                 {
                     var token = _userManager.GenerateEmailConfirmationTokenAsync(users);
                     var confirmationLink = Url.Action("TokenConfirmation", "Account", new { userId = users.Id, token = token }, Request.Scheme);
+                    //For token
+                    _emailSender.SendEmailAsync(users.Email, "Confirm Your Code", $" This is your code {valueOfRandomValue}");
+                    Console.WriteLine(confirmationLink);
 
-                    //await _emailSender.SendEmailAsync(users.Email, "Confirm Your Code", $"Here is code please enter it, for authentication purpose {valueOfRandomValue}. Thank you");
-                    //Console.WriteLine(confirmationLink);
-                    //_logger.Log(LogLevel.Warning, confirmationLink);
+                    _logger.Log(LogLevel.Warning, confirmationLink);
                     ValidaionTokenMesage validaionTokenMesage = new ValidaionTokenMesage()
                     {
-                        Message = confirmationLink,
+                        Message = $"Go to {confirmationLink} and paste your information to Confirm your token.",
                         UserID = users.Id,
                         Token = token,
                         UniqueCode = valueOfRandomValue
