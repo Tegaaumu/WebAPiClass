@@ -214,7 +214,7 @@ namespace ShoppingApi.Controllers
                         issuer: _configuration["AuthSettings:Issuer"],
                         audience: _configuration["AuthSettings:Audince"],
                         claims: await _userManager.GetClaimsAsync(user),
-                        expires: DateTime.Now.AddMinutes(3),
+                        expires: DateTime.Now.AddMinutes(5),
                         signingCredentials: new SigningCredentials(TokenKey, SecurityAlgorithms.HmacSha256));
                     //var token = new JwtSecurityTokenHandler().CreateToken(tokenDescriptor);
                     var TokenString = new JwtSecurityTokenHandler().WriteToken(token);
