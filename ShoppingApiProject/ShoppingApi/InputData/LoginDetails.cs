@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ShoppingApi.BusinessLogic;
 using System.ComponentModel.DataAnnotations;
 
 namespace ShoppingApi.InputData
@@ -13,6 +14,8 @@ namespace ShoppingApi.InputData
         [Required]
         //[Remote(action: "IsEmailInUse", controller: "Account")]
         [DataType(DataType.EmailAddress)]
+        [Remote(action: "IsEmailUsed", controller: "Account")]
+        [ValidateEmailDomain(allowedDomain: "gmail.com", ErrorMessage = "Email address must be gmail.com")]
         //[EmailAddress]
         public string Email { get; set; }
 

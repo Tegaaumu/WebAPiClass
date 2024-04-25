@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShoppingApi.BusinessLogic;
 
@@ -11,9 +12,11 @@ using ShoppingApi.BusinessLogic;
 namespace ShoppingApi.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240424114043_ModifieldDataType")]
+    partial class ModifieldDataType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -229,9 +232,6 @@ namespace ShoppingApi.Migrations
                     b.Property<string>("CartId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("CartItemId")
-                        .HasColumnType("int");
-
                     b.Property<string>("ProductImage")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -298,10 +298,6 @@ namespace ShoppingApi.Migrations
 
                     b.Property<int>("ItemsRemaining")
                         .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ProductImage")
                         .IsRequired()

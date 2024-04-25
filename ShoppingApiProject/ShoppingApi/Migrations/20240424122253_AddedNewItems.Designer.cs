@@ -12,8 +12,8 @@ using ShoppingApi.BusinessLogic;
 namespace ShoppingApi.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20240419110211_TransferedAllFiles")]
-    partial class TransferedAllFiles
+    [Migration("20240424122253_AddedNewItems")]
+    partial class AddedNewItems
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -227,6 +227,58 @@ namespace ShoppingApi.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("ShoppingApi.Cart.CartDetails", b =>
+                {
+                    b.Property<string>("CartId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("CartItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProductImage")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("CartId");
+
+                    b.ToTable("CartDetails");
+                });
+
+            modelBuilder.Entity("ShoppingApi.Cart.CartItem", b =>
+                {
+                    b.Property<int>("CartItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CartItemId"));
+
+                    b.Property<string>("CartDetailsCartId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Price")
+                        .HasColumnType("float");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("CartItemId");
+
+                    b.HasIndex("CartDetailsCartId");
+
+                    b.ToTable("CartItem");
+                });
+
             modelBuilder.Entity("ShoppingApi.InputData.ShoppingInput", b =>
                 {
                     b.Property<int>("Id")
@@ -317,6 +369,18 @@ namespace ShoppingApi.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("ShoppingApi.Cart.CartItem", b =>
+                {
+                    b.HasOne("ShoppingApi.Cart.CartDetails", null)
+                        .WithMany("Items")
+                        .HasForeignKey("CartDetailsCartId");
+                });
+
+            modelBuilder.Entity("ShoppingApi.Cart.CartDetails", b =>
+                {
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

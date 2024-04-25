@@ -14,11 +14,16 @@ using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using Microsoft.AspNetCore.Hosting.Server;
 using System.Net.Mail;
 using System.Net;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
 //using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 
 namespace ShoppingApi.Controllers
 {
+    [AllowAnonymous]
     [ApiController]
     [Route("api/[controller]")]
     public class AccountController : ControllerBase
@@ -28,19 +33,36 @@ namespace ShoppingApi.Controllers
         public ApplicationDBContext? _applicationDBContext;
         private readonly ILogger<AccountController> _logger;
         private readonly IEmailSender _emailSender;
+        private IConfiguration _configuration {get; set;}
 
-        public AccountController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ApplicationDBContext? applicationDBContext, ILogger<AccountController> logger, IEmailSender emailSender)
+        public AccountController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ApplicationDBContext? applicationDBContext, ILogger<AccountController> logger, IEmailSender emailSender, IConfiguration configuration)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _applicationDBContext = applicationDBContext;
             _logger = logger;
             _emailSender = emailSender;
+            _configuration = configuration;
         }
+
+        //[AcceptVerbs("Get", "Post")]
+        //public async Task<IActionResult> IsEmailUsed(string email)
+        //{
+        //    var user = await _userManager.FindByEmailAsync(email);
+        //    if (user == null)
+        //    {
+        //        return Ok(true);
+        //    }
+        //    else
+        //    {
+        //        return Ok($"This user email{user}exist");
+        //    }
+        //}
 
 
         [HttpGet("GetRegisterDetails")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult GetLogInDetails()
         {
@@ -73,7 +95,8 @@ namespace ShoppingApi.Controllers
 
         [HttpPost("RegisterUsers")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> Register(LoginDetails loginDetails)
+        //added new code [FromBody]
+        public async Task<IActionResult> Register([FromBody]LoginDetails loginDetails)
         {
             if (ModelState.IsValid)
             {
@@ -88,6 +111,12 @@ namespace ShoppingApi.Controllers
                 var RegisterUsers = await _userManager.CreateAsync(users, loginDetails.Password);
                 if (RegisterUsers.Succeeded)
                 {
+                    Claim[] claims = [
+                    new Claim(ClaimTypes.Email, loginDetails.Email),
+                    new Claim(ClaimTypes.Role, loginDetails.UserName),
+                    ];
+                    var tega = await _userManager.AddClaimsAsync(users!,claims);
+
                     var token = _userManager.GenerateEmailConfirmationTokenAsync(users);
                     var confirmationLink = Url.Action("TokenConfirmation", "Account", new { userId = users.Id, token = token }, Request.Scheme);
                     //For token
@@ -117,6 +146,7 @@ namespace ShoppingApi.Controllers
         }
 
 
+
         [HttpPost("Confirmregistration")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -142,6 +172,7 @@ namespace ShoppingApi.Controllers
             return BadRequest("User is not valid");
         }
 
+        [AllowAnonymous]
         [HttpPost("LogIn")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -152,35 +183,48 @@ namespace ShoppingApi.Controllers
             if (ModelState.IsValid)
             {
 
-            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Email == signIn.UserName || u.UserName == signIn.UserName);
+            //var user1 = await _userManager!.Users.FirstOrDefaultAsync(u => u.Email == signIn.UserName || u.UserName == signIn.UserName);
+            var user = await _userManager.FindByEmailAsync(signIn.UserName);
             if (user == null)
             {
                 return BadRequest("You entered a wrong username or email");
             }
 
 
-                if (user != null && !user.EmailConfirmed && (await _userManager.CheckPasswordAsync(user, signIn.Password)))
-                {
-                    ModelState.AddModelError(string.Empty, "Email not confirmed yet");
-
-                    return Ok(signIn);
-                }
-
-                var User = new ApplicationUser
-                {
-                    UserName = user.UserName,
-                    Email = user.Email
-                };
+                //if (user != null && !user.EmailConfirmed && (await _userManager.CheckPasswordAsync(user, signIn.Password)))
+                //{
+                //    ModelState.AddModelError(string.Empty, "Email not confirmed yet");
+                //    var modelStateErrors = ModelState.Values.SelectMany(v => v.Errors).Select(v => v.ErrorMessage).ToList();
+                //    return BadRequest($"Please place in the proper value at {string.Join(", ", modelStateErrors)}");
+                //}
+                 
                 var test = await _userManager.CheckPasswordAsync(user, signIn.Password);
+                if (!test) return BadRequest("The password is worng");
 
-                var result = await _signInManager.PasswordSignInAsync(signIn.UserName, signIn.Password, signIn.RememberMe, lockoutOnFailure: true);
+                var result = await _signInManager.CheckPasswordSignInAsync(user, signIn.Password, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
-                    return Ok("You have signed in successfully");
+                    var key = _configuration["AuthSettings:Key"];
+                    var key1 = _configuration["AuthSettings:Key"];
+                    var key2 = _configuration["AuthSettings:Audince"];
+                    //New code added for JWT
+                    var TokenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["AuthSettings:Key"]));
+                    //var tokenDescriptor = new JwtSecurityToken(
+                    var token = new JwtSecurityToken(
+                        issuer: _configuration["AuthSettings:Issuer"],
+                        audience: _configuration["AuthSettings:Audince"],
+                        claims: await _userManager.GetClaimsAsync(user),
+                        expires: DateTime.Now.AddMinutes(3),
+                        signingCredentials: new SigningCredentials(TokenKey, SecurityAlgorithms.HmacSha256));
+                    //var token = new JwtSecurityTokenHandler().CreateToken(tokenDescriptor);
+                    var TokenString = new JwtSecurityTokenHandler().WriteToken(token);
+                    Console.WriteLine(TokenString);
+                    return Ok("You have signed in successfully " + TokenString);
+                    //return Ok("You have signed in successfully " + TokenString);
                 }
                 else
                 {
-                    return BadRequest("Password is not correct");
+                    return BadRequest(null + " " + result.GetType);
                 }
 
                 //if (result.IsLockedOut)
@@ -191,17 +235,23 @@ namespace ShoppingApi.Controllers
             return Ok();
         }
 
+        [AllowAnonymous]
         [HttpGet("IfUserIsSignedIn")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetSignIn()
         {
-            var user = _signInManager.IsSignedIn(User);
-            if(user == true)
+            //check here to print out claims for user.
+            var te = ClaimsPrincipal.Current;
+            //var User = HttpContext.User;
+            var xser = _signInManager!.IsSignedIn(User);
+            var user = HttpContext.User;
+            if (user.Identity.IsAuthenticated)
             {
-                var userDetails = User.Identity.Name;
-                //var userDetail = User.Identity.AuthenticationType; 
+                var userDetails = user.Claims.FirstOrDefault().Value;
+                var userDetails1 = user.Identities.FirstOrDefault().Claims.FirstOrDefault().Value;
                 return Ok($"{userDetails} is currently signed in");
             }
+
 
             return BadRequest("You are not signed in yet");
         }
