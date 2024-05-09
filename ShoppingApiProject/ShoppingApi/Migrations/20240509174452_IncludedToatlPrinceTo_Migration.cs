@@ -5,25 +5,25 @@
 namespace ShoppingApi.Migrations
 {
     /// <inheritdoc />
-    public partial class AddedNameorShoppingItems : Migration
+    public partial class IncludedToatlPrinceTo_Migration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "Name",
-                table: "ShoppingInput",
-                type: "nvarchar(max)",
+            migrationBuilder.AddColumn<double>(
+                name: "TotalPrice",
+                table: "CartDetails",
+                type: "float",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: 0.0);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Name",
-                table: "ShoppingInput");
+                name: "TotalPrice",
+                table: "CartDetails");
         }
     }
 }

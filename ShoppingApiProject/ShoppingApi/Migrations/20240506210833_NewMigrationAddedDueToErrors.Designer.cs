@@ -12,8 +12,8 @@ using ShoppingApi.BusinessLogic;
 namespace ShoppingApi.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20240424122618_AddedNameorShoppingItems")]
-    partial class AddedNameorShoppingItems
+    [Migration("20240506210833_NewMigrationAddedDueToErrors")]
+    partial class NewMigrationAddedDueToErrors
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -229,11 +229,17 @@ namespace ShoppingApi.Migrations
 
             modelBuilder.Entity("ShoppingApi.Cart.CartDetails", b =>
                 {
-                    b.Property<string>("CartId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("CartId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CartId"));
 
                     b.Property<int>("CartItemId")
                         .HasColumnType("int");
+
+                    b.Property<double>("Price")
+                        .HasColumnType("float");
 
                     b.Property<string>("ProductImage")
                         .IsRequired()
@@ -256,15 +262,12 @@ namespace ShoppingApi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CartItemId"));
 
-                    b.Property<string>("CartDetailsCartId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int?>("CartDetailsCartId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("Price")
-                        .HasColumnType("float");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
@@ -322,6 +325,39 @@ namespace ShoppingApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ShoppingInput");
+                });
+
+            modelBuilder.Entity("ShoppingApi.WishList.WishListItems", b =>
+                {
+                    b.Property<string>("WishListId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Occasion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Price")
+                        .HasColumnType("float");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Reminder")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("User")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("WishListId");
+
+                    b.HasIndex("WishListId")
+                        .IsUnique();
+
+                    b.ToTable("WishList");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
