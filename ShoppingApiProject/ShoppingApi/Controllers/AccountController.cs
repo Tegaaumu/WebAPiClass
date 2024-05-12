@@ -75,6 +75,7 @@ namespace ShoppingApi.Controllers
                 {
                     var outputLoginDetails = new OutputLoginDetails
                     {
+                        Id = user.Id,
                         UserName = user.UserName,
                         Email = user.Email
                     };
