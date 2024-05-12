@@ -4,12 +4,13 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
-using ShoppingApi.InputData;
+using Microsoft.AspNetCore.Authorization;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace ShoppingApi.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ShoppingController : ControllerBase
@@ -23,6 +24,7 @@ namespace ShoppingApi.Controllers
             _applicationDBContext = applicationDBContext;
         }
         // GET: api/<Shopping>
+
         [HttpGet("all")]
         public async Task<IActionResult> Get()
         {
@@ -30,6 +32,7 @@ namespace ShoppingApi.Controllers
         }
 
         // GET api/<Shopping>/5
+
         [HttpGet]
         [Route("{id:int}", Name = "CreatedItems")]
         public async Task<IActionResult> Get(int id)
@@ -43,6 +46,7 @@ namespace ShoppingApi.Controllers
 
 
         // GET api/<Shopping>/5
+
         [HttpGet]
         [Route("{name}/GetByBrandName", Name = "GetByBrandName")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -58,6 +62,7 @@ namespace ShoppingApi.Controllers
         }
 
         // POST api/<Shopping>
+
         [HttpPost("PlaceItems")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -75,6 +80,7 @@ namespace ShoppingApi.Controllers
         }
 
         // PUT api/<Shopping>/5
+
         [HttpPatch("{id}/UpdatePartial")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

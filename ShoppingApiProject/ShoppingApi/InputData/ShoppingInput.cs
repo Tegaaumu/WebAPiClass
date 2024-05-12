@@ -13,6 +13,7 @@ namespace ShoppingApi.InputData
         [Required]
         public double ProductPriceM { get; set; }
         public double ProductPriceF { get; set; }
+        public string Name { get; set; }
         public string BrandName { get; set; }
 
         public string CompanyImage { get; set; }

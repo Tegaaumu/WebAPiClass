@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ShoppingApi.Migrations
 {
     /// <inheritdoc />
-    public partial class TransferedAllFiles : Migration
+    public partial class NewMigrationAddedDueToErrors : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -52,6 +52,22 @@ namespace ShoppingApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CartDetails",
+                columns: table => new
+                {
+                    CartId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CartItemId = table.Column<int>(type: "int", nullable: false),
+                    ProductImage = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Price = table.Column<double>(type: "float", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CartDetails", x => x.CartId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ShoppingInput",
                 columns: table => new
                 {
@@ -60,6 +76,7 @@ namespace ShoppingApi.Migrations
                     ProductImage = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ProductPriceM = table.Column<double>(type: "float", nullable: false),
                     ProductPriceF = table.Column<double>(type: "float", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     BrandName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CompanyImage = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Categpories = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -69,6 +86,23 @@ namespace ShoppingApi.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ShoppingInput", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WishList",
+                columns: table => new
+                {
+                    WishListId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    User = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Price = table.Column<double>(type: "float", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    Occasion = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Reminder = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WishList", x => x.WishListId);
                 });
 
             migrationBuilder.CreateTable(
@@ -177,6 +211,27 @@ namespace ShoppingApi.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "CartItem",
+                columns: table => new
+                {
+                    CartItemId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    CartDetailsCartId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CartItem", x => x.CartItemId);
+                    table.ForeignKey(
+                        name: "FK_CartItem_CartDetails_CartDetailsCartId",
+                        column: x => x.CartDetailsCartId,
+                        principalTable: "CartDetails",
+                        principalColumn: "CartId");
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -215,6 +270,17 @@ namespace ShoppingApi.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CartItem_CartDetailsCartId",
+                table: "CartItem",
+                column: "CartDetailsCartId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WishList_WishListId",
+                table: "WishList",
+                column: "WishListId",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -236,13 +302,22 @@ namespace ShoppingApi.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "CartItem");
+
+            migrationBuilder.DropTable(
                 name: "ShoppingInput");
+
+            migrationBuilder.DropTable(
+                name: "WishList");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "CartDetails");
         }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShoppingApi.BusinessLogic;
 
@@ -11,9 +12,11 @@ using ShoppingApi.BusinessLogic;
 namespace ShoppingApi.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240506210833_NewMigrationAddedDueToErrors")]
+    partial class NewMigrationAddedDueToErrors
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -232,8 +235,8 @@ namespace ShoppingApi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CartId"));
 
-                    b.Property<DateTime>("CurrentTime")
-                        .HasColumnType("datetime2");
+                    b.Property<int>("CartItemId")
+                        .HasColumnType("int");
 
                     b.Property<double>("Price")
                         .HasColumnType("float");
@@ -241,9 +244,6 @@ namespace ShoppingApi.Migrations
                     b.Property<string>("ProductImage")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("TotalPrice")
-                        .HasColumnType("float");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -254,7 +254,7 @@ namespace ShoppingApi.Migrations
                     b.ToTable("CartDetails");
                 });
 
-            modelBuilder.Entity("ShoppingApi.Cart.CartItems", b =>
+            modelBuilder.Entity("ShoppingApi.Cart.CartItem", b =>
                 {
                     b.Property<int>("CartItemId")
                         .ValueGeneratedOnAdd()
@@ -279,7 +279,7 @@ namespace ShoppingApi.Migrations
 
                     b.HasIndex("CartDetailsCartId");
 
-                    b.ToTable("CartItems");
+                    b.ToTable("CartItem");
                 });
 
             modelBuilder.Entity("ShoppingApi.InputData.ShoppingInput", b =>
@@ -325,45 +325,6 @@ namespace ShoppingApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ShoppingInput");
-                });
-
-            modelBuilder.Entity("ShoppingApi.Payment.PaymentDetails", b =>
-                {
-                    b.Property<string>("Payment_ID")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<double>("Amount")
-                        .HasColumnType("float");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Payment_Type")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("Status")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("TrxRef")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId_From_Cart")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Payment_ID");
-
-                    b.ToTable("PaymentDetails");
                 });
 
             modelBuilder.Entity("ShoppingApi.WishList.WishListItems", b =>
@@ -450,7 +411,7 @@ namespace ShoppingApi.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ShoppingApi.Cart.CartItems", b =>
+            modelBuilder.Entity("ShoppingApi.Cart.CartItem", b =>
                 {
                     b.HasOne("ShoppingApi.Cart.CartDetails", null)
                         .WithMany("Items")
