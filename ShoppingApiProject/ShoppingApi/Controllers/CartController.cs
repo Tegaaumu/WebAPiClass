@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ShoppingApi.BusinessLogic;
 using ShoppingApi.Cart;
 using ShoppingApi.OutputModel;
@@ -12,7 +13,6 @@ using System.Security.Claims;
 
 namespace ShoppingApi.Controllers
 {
-    [AllowAnonymous]
     [Route("api/[controller]")]
     [ApiController]
     public class CartController : ControllerBase
@@ -34,6 +34,11 @@ namespace ShoppingApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Get()
         {
+            var read= _applicationDBContext.CartDetails!.Include(x => x.Items).FirstOrDefault(x => x.CartId == 3);
+            var name = read?.Items.Where(x => x.CartItemId == 1).FirstOrDefault();
+            var username= name.Name;
+            var userquantity = name.Quantity;
+            var userproduct = name.ProductId;
             if (_applicationDBContext!.CartDetails.Any() == false)
             {
                 return BadRequest("There is no item in this cart");
@@ -64,6 +69,8 @@ namespace ShoppingApi.Controllers
 
         // GET api/<CartController>/5
         [HttpGet("{user}")]
+        //Didnt work
+        [Authorize(Policy = "ShopOwner")]
         public async Task<IActionResult> Get(string user)
         {
             var UserDetails = _applicationDBContext!.CartDetails.Where(x => x.UserId == user);
@@ -97,6 +104,7 @@ namespace ShoppingApi.Controllers
             if (productDetails == null) return BadRequest("this product is not yet available");
             if (UserDetails2 == null) return BadRequest("LogIn before you can add item to cart");
             productId.Name = productDetails.Name;
+            productId.UserId = userM.Id;
             List<CartItems> _cartItem = new List<CartItems>();
             _cartItem.Add(productId);
             var cartTotal = productId.Quantity * productDetails.ProductPriceM;

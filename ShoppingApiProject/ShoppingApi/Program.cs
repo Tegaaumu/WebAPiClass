@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
 using System.Security.Cryptography.Xml;
+using ShoppingApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +18,8 @@ var Configuration = builder.Configuration;
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+//Newly added AddNewtonsoftJson.
+builder.Services.AddControllers().AddNewtonsoftJson();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -32,9 +34,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.SignIn.RequireConfirmedAccount = true;
-})
+}).AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDBContext>()
-    .AddDefaultTokenProviders().AddSignInManager().AddRoles<IdentityRole>();
+    .AddDefaultTokenProviders().AddSignInManager();
 
 builder.Services.AddDbContextPool<ApplicationDBContext>(options =>
 {
@@ -42,6 +44,7 @@ builder.Services.AddDbContextPool<ApplicationDBContext>(options =>
         builder.Configuration.GetConnectionString("ExternalDatabaseConnection")
 );
 });
+builder.Services.AddAutoMapper(typeof(Program));
 //Added jwt authorization
 var check1 = Configuration["AuthSettings:Issuer"];
 var check2 = Configuration["AuthSettings:Audince"];
@@ -49,8 +52,8 @@ var check3 = Configuration["AuthSettings:Key"];
 builder.Services.AddAuthentication(auth =>  
 {
     auth.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    auth.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
     auth.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    auth.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -65,6 +68,18 @@ builder.Services.AddAuthentication(auth =>
         //RequireExpirationTime = true
     };
 });
+        //Didnt work
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ShopOwner", policy => policy.Requirements.Add(new ShopOwnerRequirement()));
+    options.AddPolicy("Admintration", policy => policy.RequireRole("Admin", "admin", "TegaUmu"));
+});
+//builder.Services.AddAuthorizationBuilder().AddPolicy("Admin", o =>
+//{
+//    o.RequireAuthenticatedUser();
+//    //o.RequireRole("Admin");
+//    o.RequireRole("Admin", "admin");
+//});
 //addedthis code to allow token from JWT to be read.
 builder.Services.AddSwaggerGen(swagger =>{
     swagger.SwaggerDoc("v1", new OpenApiInfo { Version = "v1" });
@@ -97,6 +112,10 @@ builder.Services.AddSwaggerGen(swagger =>{
 //    .Build();
 //    options.Filters.Add(new AuthorizeFilter(policy));
 //});
+        //Didnt work
+builder.Services.AddScoped<ApplicationDBContext>();
+        //Didnt work
+builder.Services.AddTransient<IAuthorizationHandler, ShopOwnerHandler>();
 builder.Services.AddScoped<IShoppingRepository, MainShoppingRepository>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 

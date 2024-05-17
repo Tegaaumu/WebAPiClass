@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using System.Xml;
 using ShoppingApi.WishList;
 using ShoppingApi.Payment;
+using ShoppingApi.Shipment;
 
 namespace ShoppingApi.BusinessLogic
 {
@@ -17,6 +18,7 @@ namespace ShoppingApi.BusinessLogic
         public DbSet<CartDetails> CartDetails { get; set; }
         public DbSet<WishListItems> WishList { get; set; }
         public DbSet<PaymentDetails> PaymentDetails { get; set; }
+        public DbSet<ShipmentDetails> ShipmentDetails { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
