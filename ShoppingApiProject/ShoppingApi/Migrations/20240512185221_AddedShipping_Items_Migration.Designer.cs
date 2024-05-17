@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShoppingApi.BusinessLogic;
 
@@ -11,9 +12,11 @@ using ShoppingApi.BusinessLogic;
 namespace ShoppingApi.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240512185221_AddedShipping_Items_Migration")]
+    partial class AddedShipping_Items_Migration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -238,9 +241,6 @@ namespace ShoppingApi.Migrations
                     b.Property<DateTime>("CurrentTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("Paymemt_Status")
-                        .HasColumnType("bit");
-
                     b.Property<double>("Price")
                         .HasColumnType("float");
 
@@ -280,10 +280,6 @@ namespace ShoppingApi.Migrations
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("CartItemId");
 
@@ -335,31 +331,6 @@ namespace ShoppingApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ShoppingInput");
-                });
-
-            modelBuilder.Entity("ShoppingApi.Payment.Items_Payed_For", b =>
-                {
-                    b.Property<string>("Payment_Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("Items_Payed")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PaymentDetailsPayment_ID")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool>("Status")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("User_Id")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Payment_Id");
-
-                    b.HasIndex("PaymentDetailsPayment_ID");
-
-                    b.ToTable("Items_Payed_For");
                 });
 
             modelBuilder.Entity("ShoppingApi.Payment.PaymentDetails", b =>
@@ -421,10 +392,6 @@ namespace ShoppingApi.Migrations
 
                     b.Property<DateTime>("Modified_at")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Total")
                         .HasColumnType("float");
@@ -529,21 +496,9 @@ namespace ShoppingApi.Migrations
                         .HasForeignKey("CartDetailsCartId");
                 });
 
-            modelBuilder.Entity("ShoppingApi.Payment.Items_Payed_For", b =>
-                {
-                    b.HasOne("ShoppingApi.Payment.PaymentDetails", null)
-                        .WithMany("items_payed_for")
-                        .HasForeignKey("PaymentDetailsPayment_ID");
-                });
-
             modelBuilder.Entity("ShoppingApi.Cart.CartDetails", b =>
                 {
                     b.Navigation("Items");
-                });
-
-            modelBuilder.Entity("ShoppingApi.Payment.PaymentDetails", b =>
-                {
-                    b.Navigation("items_payed_for");
                 });
 #pragma warning restore 612, 618
         }

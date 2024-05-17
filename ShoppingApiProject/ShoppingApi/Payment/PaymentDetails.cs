@@ -12,6 +12,7 @@ namespace ShoppingApi.Payment
         public string Payment_Type { get; set; } = "PayStack";
         public double Amount { get; set;}
         public string TrxRef { get; set; }
+        public List<Items_Payed_For>? items_payed_for { get; set; }
         public bool Status{ get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 

@@ -3,11 +3,14 @@ using ShoppingApi.BusinessLogic;
 using Microsoft.AspNetCore.Identity;
 using PayStack.Net;
 using ShoppingApi.Payment;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace ShoppingApi.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class PaymentController : ControllerBase
@@ -74,7 +77,19 @@ namespace ShoppingApi.Controllers
                         TrxRef = request.Reference,
                         UserId_From_Cart = UserDetails.Id,
                     };
-                    await _applicationDBContext.PaymentDetails.AddAsync(payment);
+                    //New state added
+                    List<Items_Payed_For> general = new List<Items_Payed_For>();
+                    foreach (var items in itemsFromCart)
+                    {
+                        Items_Payed_For items_Payed_For = new Items_Payed_For()
+                        {
+                            Items_Payed = items.CartId,
+                            User_Id = items.UserId,
+                        };
+                        general.Add(items_Payed_For);
+                    }
+                    payment.items_payed_for = general;
+                        await _applicationDBContext.PaymentDetails.AddAsync(payment);
                     await _applicationDBContext.SaveChangesAsync();
                     return Ok($"Hereis the authentication Url {response.Data.AuthorizationUrl} and here is your code {request.Reference} with a message {response.Message}");
                 }
@@ -92,9 +107,23 @@ namespace ShoppingApi.Controllers
             TransactionVerifyResponse response = PayStack.Transactions.Verify(references);
             if (response.Data.Status == "success")
             {
-                var transaction = _applicationDBContext!.PaymentDetails.Where(x => x.TrxRef == references).FirstOrDefault();
+                var transaction = _applicationDBContext!.PaymentDetails.Include(x => x.items_payed_for).Where(x => x.TrxRef == references).FirstOrDefault();
+                //Newly added.
+                var itemsFromCart = _applicationDBContext.CartDetails.Where(x => x.UserId == transaction.UserId_From_Cart);
+                //Stop
                 if (transaction == null) return BadRequest("The refernces inputed is invalid.");
+                if (itemsFromCart == null) return BadRequest("The user is not in the cart");
                 transaction.Status = true;
+                //Newly added.
+                var value = transaction.items_payed_for.Where(x => x.User_Id == transaction.UserId_From_Cart);
+                foreach (var items in itemsFromCart)
+                {
+                    items.Paymemt_Status = true;
+                }
+                foreach (var items in value)
+                {
+                    items.Status = true;
+                }
                 _applicationDBContext.PaymentDetails.Update(transaction);
                 await _applicationDBContext.SaveChangesAsync();
                 return Ok($"{transaction.Email} you have successfully verified your payment. {response.Data.GatewayResponse}");

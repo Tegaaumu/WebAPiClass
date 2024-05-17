@@ -17,15 +17,6 @@ namespace ShoppingApi.Cart
         public List<CartItems> Items { get; set; } = new List<CartItems>();
         public double TotalPrice { get; set; } 
         public DateTime CurrentTime { get; set; } = DateTime.Now;
-
-        //private double CalculateTotalPrice()
-        //{
-        //    double total = 0;
-        //    foreach (var item in Items)
-        //    {
-        //        total += Price * item.Quantity;
-        //    }
-        //    return total;
-        //}
+        public bool Paymemt_Status { get; set; } = false;
     }
 }
